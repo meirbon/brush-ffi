@@ -84,13 +84,12 @@ pub unsafe extern "C" fn br_get_texture_dimensions(tex_width: *mut u32, tex_heig
         return;
     };
 
-    if let Some(tex_width) = tex_width.as_mut() {
-        *tex_width = brush.tex_width;
+    if tex_width.is_null() || tex_height.is_null() {
+        return;
     }
 
-    if let Some(tex_height) = tex_height.as_mut() {
-        *tex_height = brush.tex_width;
-    }
+    *tex_width = brush.tex_width;
+    *tex_height = brush.tex_height;
 }
 
 #[no_mangle]
@@ -134,6 +133,7 @@ pub extern "C" fn br_update() {
         }
         Ok(BrushAction::ReDraw) => {}
         Err(BrushError::TextureTooSmall { suggested }) => {
+            tex_changed = true;
             brush
                 .tex_data
                 .resize((suggested.0 * suggested.1) as usize, 0);

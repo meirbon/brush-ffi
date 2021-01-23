@@ -31,3 +31,8 @@ struct Timer
 
     inline void reset() { start = get(); }
 };
+
+void error_callback(int code, const char *message);
+
+void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+                                const GLchar *message, const void *userParam);

@@ -13,11 +13,6 @@
 
 using namespace glm;
 
-void error_callback(int code, const char *message)
-{
-    std::cout << "GLFW Error: " << code << " :: " << message << std::endl;
-}
-
 struct Vertex
 {
     Vertex() = default;
@@ -30,11 +25,14 @@ struct Vertex
     vec4 color;
 };
 
-void upload_vertices(const BrushVertex *vertices, uint32_t count, GLuint buffer)
+bool upload_vertices(const BrushVertex *vertices, uint32_t count, GLuint *buffer, GLuint *buffer_capacity)
 {
     if (count == 0)
-        return;
-    std::vector<Vertex> vertex_buffer(count * 6);
+        return false;
+
+    static std::vector<Vertex> vertex_buffer;
+    vertex_buffer.resize(count * 6);
+
     for (uint i = 0; i < count; i++)
     {
         uint j = i * 6;
@@ -59,8 +57,21 @@ void upload_vertices(const BrushVertex *vertices, uint32_t count, GLuint buffer)
         vertex_buffer[j + 5] = v2;
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, vertex_buffer.size() * sizeof(Vertex), vertex_buffer.data(), GL_DYNAMIC_DRAW);
+    if (*buffer_capacity < (count * 6))
+    {
+        glDeleteBuffers(1, buffer);
+        glGenBuffers(1, buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, *buffer);
+        glBufferData(GL_ARRAY_BUFFER, count * 6 * sizeof(Vertex), vertex_buffer.data(), GL_DYNAMIC_DRAW);
+        *buffer_capacity = count * 6;
+        return true;
+    }
+    else
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, *buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, count * 6 * sizeof(Vertex), vertex_buffer.data());
+        return false;
+    }
 }
 
 GLint get_uniform_location(GLuint shader_id, std::string_view name)
@@ -109,7 +120,12 @@ int main()
     if (error != GLEW_NO_ERROR)
     {
         std::cout << "Could not initialize GLEW: " << glewGetErrorString(error) << std::endl;
+        return -1;
     }
+
+    // During init, enable debug output
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(message_callback, 0);
 
     glViewport(0, 0, width, height);
 
@@ -118,9 +134,10 @@ int main()
     br_update();
     uint32_t count = 0;
     const BrushVertex *vertices = br_get_vertices(&count);
-    GLuint buffer = 0;
+    GLuint buffer = 0, buffer_capacity = 1024;
     glGenBuffers(1, &buffer);
-    upload_vertices(vertices, count, buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, buffer_capacity * sizeof(Vertex), nullptr, GL_STREAM_DRAW);
 
     GLuint texture = 0;
     uint32_t needs_update = 0;
@@ -134,7 +151,7 @@ int main()
 
     uint32_t tex_width, tex_height;
     br_get_texture_dimensions(&tex_width, &tex_height);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R, tex_width, tex_height, 0, GL_R, GL_UNSIGNED_BYTE, tex_data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex_width, tex_height, 0, GL_RED, GL_UNSIGNED_BYTE, tex_data);
 
     GLuint vao = 0;
     glGenVertexArrays(1, &vao);
@@ -151,6 +168,7 @@ int main()
                         ortho(0.0f, static_cast<float>(width), 0.0f, static_cast<float>(height), -1.0f, 1.0f);
 
     Timer t;
+    bool buffer_changed = false;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -161,7 +179,7 @@ int main()
             glfwSetWindowShouldClose(window, 1);
 
         std::string fps_str = std::to_string(fps);
-        std::string text = "FPS: " + fps_str.substr(0, fps_str.size() - 3);
+        std::string text = "FPS: " + fps_str.substr(0, fps_str.size() - 5);
 
         for (int x = 10; x < width - 200; x += 200)
         {
@@ -200,7 +218,18 @@ int main()
 
         count = 0;
         needs_update = 0;
-        upload_vertices(br_get_vertices(&count), count, buffer);
+        const BrushVertex *v = br_get_vertices(&count);
+        if (upload_vertices(v, count, &buffer, &buffer_capacity))
+        {
+            glBindVertexArray(vao);
+            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void *)sizeof(vec2));
+            glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void *)sizeof(vec4));
+        }
 
         br_get_texture_dimensions(&tex_width, &tex_height);
         br_get_texture_data(&needs_update);
@@ -212,6 +241,7 @@ int main()
 
         if (count > 0)
         {
+            glDisable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

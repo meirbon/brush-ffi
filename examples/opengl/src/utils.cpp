@@ -89,3 +89,15 @@ void check_compile_errors(std::string_view file, GLuint shader, std::string_view
         }
     }
 }
+
+void error_callback(int code, const char *message)
+{
+    std::cout << "GLFW Error: " << code << " :: " << message << std::endl;
+}
+
+void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+                                 const GLchar *message, const void *userParam)
+{
+    fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
+}
