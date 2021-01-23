@@ -80,7 +80,7 @@ int main()
 
     const unsigned int width = 1280;
     const unsigned int height = 720;
-    auto good_times = br_create_brush("fonts/good-times-rg.ttf", width, height);
+    auto good_times = br_create_brush("fonts/good-times-rg.ttf");
     auto halo3 = br_add_font("fonts/Halo3.ttf");
     auto hemi_head = br_add_font("fonts/hemi-head-bd-it.ttf");
     auto pricedown = br_add_font("fonts/pricedown-bl.ttf");
@@ -179,7 +179,6 @@ int main()
                 section.color_g = 1.0f;
                 section.color_b = 1.0f;
                 section.color_a = 1.0f;
-                section.z_value = 0.0;
                 section.font_id = good_times;
                 br_queue_text(section);
 

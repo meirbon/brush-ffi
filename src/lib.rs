@@ -21,7 +21,6 @@ pub struct TextSection {
     color_g: f32,
     color_b: f32,
     color_a: f32,
-    z_value: f32,
     font_id: u32,
 }
 
@@ -30,8 +29,6 @@ struct Brush {
     brush: GlyphBrush<BrushVertex>,
     tex_width: u32,
     tex_height: u32,
-    screen_width: u32,
-    screen_height: u32,
     tex_data: Vec<u8>,
     vertices: Vec<BrushVertex>,
     tex_changed: bool,
@@ -40,11 +37,7 @@ struct Brush {
 static mut BRUSH: Option<RwLock<Brush>> = None;
 
 #[no_mangle]
-pub unsafe extern "C" fn br_create_brush(
-    file: *const c_char,
-    screen_width: u32,
-    screen_height: u32,
-) -> i32 {
+pub unsafe extern "C" fn br_create_brush(file: *const c_char) -> i32 {
     if BRUSH.is_some() {
         return br_add_font(file);
     }
@@ -74,8 +67,6 @@ pub unsafe extern "C" fn br_create_brush(
         brush,
         tex_width,
         tex_height,
-        screen_width,
-        screen_height,
         tex_data: vec![0; (tex_width * tex_height) as usize],
         vertices: Vec::new(),
         tex_changed: false,
@@ -233,8 +224,7 @@ pub unsafe extern "C" fn br_queue_text(section: TextSection) {
             .with_scale(PxScale {
                 x: section.scale_x,
                 y: section.scale_y,
-            })
-            .with_z(section.z_value)]);
+            })]);
 
     let mut brush = if let Some(b) = BRUSH.as_ref() {
         b.write().unwrap()
