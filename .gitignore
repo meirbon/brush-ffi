@@ -1,6 +1,8 @@
 /target
 Cargo.lock
-
+.vscode/
+.idea/
+build/
 
 # Created by https://www.toptal.com/developers/gitignore/api/rust,c++,c,windows,macos,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=rust,c++,c,windows,macos,linux

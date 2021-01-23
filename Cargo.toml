@@ -10,7 +10,7 @@ build = "build.rs"
 [lib]
 name = "brush"
 path = "src/lib.rs"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
 glyph_brush = "0.7.2"

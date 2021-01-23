@@ -19,7 +19,7 @@ fn main() {
         .to_string();
 
     let config = cbindgen::Config {
-        language: cbindgen::Language::C,
+        language: cbindgen::Language::Cxx,
         include_guard: Some(String::from("BR_H")),
         ..Default::default()
     };
