@@ -5,6 +5,7 @@ This library does not expose all functionality of glyph-brush but it should be e
 An example for OpenGL is included.
 
 ## Usage
+- Include header (can be found in target folder after compiling).
 - Load a font using:
 ```C
 int default_font_id = br_create_brush(filename);
@@ -27,7 +28,8 @@ section.color_r = 1.0f;
 section.color_g = 1.0f;
 section.color_b = 1.0f;
 section.color_a = 1.0f;
-section.font_id = good_times;
+section.font_id = my_font_id;
+br_queue_text(section);
 ```
 - Update vertices and texture data by calling `br_update();`
 - Upload vertices and texture data in your application:
