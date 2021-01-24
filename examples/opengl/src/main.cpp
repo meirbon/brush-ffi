@@ -179,6 +179,7 @@ int main()
                 section.color_g = 1.0f;
                 section.color_b = 1.0f;
                 section.color_a = 1.0f;
+                section.z_value = 0.0f;
                 section.font_id = good_times;
                 br_queue_text(section);
 

@@ -21,6 +21,7 @@ pub struct TextSection {
     color_g: f32,
     color_b: f32,
     color_a: f32,
+    z_value: f32,
     font_id: u32,
 }
 
@@ -212,7 +213,7 @@ pub unsafe extern "C" fn br_queue_text(section: TextSection) {
 
     let section = Section::<()>::new()
         .with_screen_position((section.screen_position_x, section.screen_position_y))
-        // .with_bounds((section.bounds_x, section.bounds_y))
+        .with_bounds((section.bounds_x, section.bounds_y))
         .with_text(vec![Text::new(text)
             .with_font_id(FontId(section.font_id as _))
             .with_color([
@@ -224,7 +225,8 @@ pub unsafe extern "C" fn br_queue_text(section: TextSection) {
             .with_scale(PxScale {
                 x: section.scale_x,
                 y: section.scale_y,
-            })]);
+            })
+            .with_z(section.z_value)]);
 
     let mut brush = if let Some(b) = BRUSH.as_ref() {
         b.write().unwrap()
@@ -264,10 +266,13 @@ pub struct BrushVertex {
 
     pub uv_max_x: f32,
     pub uv_max_y: f32,
+
     pub color_r: f32,
     pub color_g: f32,
     pub color_b: f32,
     pub color_a: f32,
+
+    pub z_value: f32,
 }
 
 #[inline]
@@ -325,5 +330,6 @@ fn to_vertex(
         color_g: extra.color[1],
         color_b: extra.color[2],
         color_a: extra.color[3],
+        z_value: extra.z,
     }
 }
